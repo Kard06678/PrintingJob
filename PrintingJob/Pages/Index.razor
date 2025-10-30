@@ -1,9 +1,63 @@
-﻿@page "/"
+﻿@page "/JobList"
+@using PrintingJob.Models
+@using PrintingJob.Data
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager Navigation
 
-<PageTitle>Index</PageTitle>
+<h3>📋 Job List</h3>
 
-<h1>Hello, world!</h1>
+<p>
+    <a class="btn btn-primary" href="/create-job">+ Create Job</a>
+</p>
 
-Welcome to your new app.
+@if (jobs == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!jobs.Any())
+{
+    <p>No jobs found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Client Name</th>
+                <th>Job Name</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var j in jobs)
+            {
+                <tr>
+                    <td>@j.Id</td>
+                    <td>@j.ClientName</td>
+                    <td>@j.JobName</td>
+                    <td>@j.CurrentStatus</td>
+                    <td>@j.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <a class="btn btn-sm btn-info" href="/job-detail/@j.Id">View</a>
+                        <a class="btn btn-sm btn-warning" href="/job/edit/@j.Id">Edit</a>
+                        @* <a class="btn btn-sm btn-danger" href="/job/delete/@j.Id">Delete</a> *@
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+@code {
+    private List<Job>? jobs;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var ctx = DbFactory.CreateDbContext();
+        jobs = await ctx.Jobs.OrderByDescending(j => j.Id).ToListAsync();
+    }
+}
