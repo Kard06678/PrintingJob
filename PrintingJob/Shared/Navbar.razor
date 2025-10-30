@@ -1,0 +1,33 @@
+﻿@inject IJSRuntime JS
+
+<nav class="navbar navbar-expand navbar-light navbar-bg">
+    <!-- Botón para abrir/cerrar el sidebar en dispositivos móviles -->
+    <a class="sidebar-toggle js-sidebar-toggle">
+        <i class="hamburger align-self-center"></i>
+    </a>
+
+    <div class="navbar-collapse collapse">
+        <ul class="navbar-nav navbar-align ms-auto">
+            <li class="nav-item dropdown">
+               
+                
+            </li>
+        </ul>
+    </div>
+</nav>
+
+@code {
+    /// <summary>
+    /// Se ejecuta después de que el componente se ha renderizado
+    /// Inicializa los iconos de Feather
+    /// </summary>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("feather.replace");
+        }
+    }
+
+   
+}

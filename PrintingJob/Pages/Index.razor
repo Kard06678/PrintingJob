@@ -4,12 +4,37 @@
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
-<h3>📋 Job List</h3>
+<div class="mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h3>
+                <i class="align-middle me-2" data-feather="list"></i>
+                Job List
+            </h3>
+        </div>
+        <div class="col-auto">
+            <a class="btn btn-primary" href="/create-job">
+                <i class="align-middle me-2" data-feather="plus"></i>
+                Create Job
+            </a>
+        </div>
+    </div>
+</div>
 
-<p>
-    <a class="btn btn-primary" href="/create-job">+ Create Job</a>
-</p>
+<!-- Filtro por estado -->
+<div class="mb-3">
+    <select class="form-select" @onchange="FilterByStatus" style="max-width: 200px;">
+        <option value="">All Status</option>
+        <option value="Received">Received</option>
+        <option value="Printing">Printing</option>
+        <option value="Inserting">Inserting</option>
+        <option value="Mailed">Mailed</option>
+        <option value="Delivered">Delivered</option>
+        <option value="Exception">Exception</option>
+    </select>
+</div>
 
 @if (jobs == null)
 {
@@ -17,47 +42,259 @@
 }
 else if (!jobs.Any())
 {
-    <p>No jobs found.</p>
+    <div class="alert alert-info">
+        <i class="align-middle me-2" data-feather="info"></i>
+        No jobs found.
+    </div>
 }
 else
 {
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Client Name</th>
-                <th>Job Name</th>
-                <th>Status</th>
-                <th>Created At</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var j in jobs)
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Client Name</th>
+                        <th>Job Name</th>
+                        <th>Quantity</th>
+                        <th>Carrier</th>
+                        <th>Status</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var j in paginatedJobs)
+                    {
+                        <tr>
+                            <td>
+                                <span class="badge bg-secondary">@j.Id</span>
+                            </td>
+                            <td>
+                                <strong>@j.ClientName</strong>
+                            </td>
+                            <td>@j.JobName</td>
+                            <td>
+                                <span class="badge bg-light text-dark">@j.Quantity</span>
+                            </td>
+                            <td>
+                                @switch (j.Carrier)
+                                {
+                                    case "USPS":
+                                        <span class="badge bg-info">USPS</span>
+                                        break;
+                                    case "UPS":
+                                        <span class="badge bg-warning">UPS</span>
+                                        break;
+                                    case "FedEx":
+                                        <span class="badge bg-danger">FedEx</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                @switch (j.CurrentStatus)
+                                {
+                                    case "Received":
+                                        <span class="badge bg-primary">Received</span>
+                                        break;
+                                    case "Printing":
+                                        <span class="badge bg-info">Printing</span>
+                                        break;
+                                    case "Inserting":
+                                        <span class="badge bg-warning">Inserting</span>
+                                        break;
+                                    case "Mailed":
+                                        <span class="badge bg-success">Mailed</span>
+                                        break;
+                                    case "Delivered":
+                                        <span class="badge bg-success">Delivered</span>
+                                        break;
+                                    case "Exception":
+                                        <span class="badge bg-danger">Exception</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                <small>@j.CreatedAt.ToString("yyyy-MM-dd HH:mm")</small>
+                            </td>
+                            <td>
+                                <a class="btn btn-sm btn-outline-info" href="/job-detail/@j.Id" title="View Details">
+                                    <i data-feather="eye"></i>
+                                </a>
+                                <a class="btn btn-sm btn-outline-warning" href="/job/edit/@j.Id" title="Edit Job">
+                                    <i data-feather="edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Paginación muy simple -->
+    @if (totalPages > 1)
+    {
+        <div class="d-flex justify-content-center align-items-center gap-2 mt-4">
+            <button class="btn btn-sm btn-outline-secondary" @onclick="() => GoToPage(currentPage - 1)" disabled="@(currentPage == 1)">
+                Previous
+            </button>
+
+            @for (int i = 1; i <= totalPages; i++)
             {
-                <tr>
-                    <td>@j.Id</td>
-                    <td>@j.ClientName</td>
-                    <td>@j.JobName</td>
-                    <td>@j.CurrentStatus</td>
-                    <td>@j.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td>
-                        <a class="btn btn-sm btn-info" href="/job-detail/@j.Id">View</a>
-                        <a class="btn btn-sm btn-warning" href="/job/edit/@j.Id">Edit</a>
-                        @* <a class="btn btn-sm btn-danger" href="/job/delete/@j.Id">Delete</a> *@
-                    </td>
-                </tr>
+                int pageNum = i;
+                if (currentPage == pageNum)
+                {
+                    <button class="btn btn-sm btn-primary">@pageNum</button>
+                }
+                else
+                {
+                    <button class="btn btn-sm btn-outline-primary" @onclick="() => GoToPage(pageNum)">@pageNum</button>
+                }
             }
-        </tbody>
-    </table>
+
+            <button class="btn btn-sm btn-outline-secondary" @onclick="() => GoToPage(currentPage + 1)" disabled="@(currentPage == totalPages)">
+                Next
+            </button>
+        </div>
+
+        <div class="text-center text-muted mt-3">
+            <small>Page @currentPage of @totalPages</small>
+        </div>
+    }
 }
 
 @code {
+    /// <summary>
+    /// Lista completa de todos los trabajos desde la base de datos
+    /// </summary>
     private List<Job>? jobs;
 
+    /// <summary>
+    /// Lista filtrada de trabajos (después de aplicar filtro de estado)
+    /// </summary>
+    private List<Job> filteredJobs = new();
+
+    /// <summary>
+    /// Estado seleccionado en el dropdown de filtro
+    /// </summary>
+    private string selectedStatus = "";
+
+    /// <summary>
+    /// Página actual que se está mostrando
+    /// </summary>
+    private int currentPage = 1;
+
+    /// <summary>
+    /// Cantidad de trabajos por página
+    /// </summary>
+    private int pageSize = 10;
+
+    /// <summary>
+    /// Total de páginas calculado según cantidad de trabajos
+    /// </summary>
+    private int totalPages = 1;
+
+    /// <summary>
+    /// Lista de trabajos para mostrar en la página actual
+    /// </summary>
+    private List<Job> paginatedJobs = new();
+
+    /// <summary>
+    /// Se ejecuta cuando se inicializa el componente
+    /// Carga todos los trabajos de la base de datos
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
-        using var ctx = DbFactory.CreateDbContext();
-        jobs = await ctx.Jobs.OrderByDescending(j => j.Id).ToListAsync();
+        await LoadJobs();
+    }
+
+    /// <summary>
+    /// Se ejecuta después de que el componente se ha renderizado
+    /// Inicializa los iconos de Feather en cada render
+    /// </summary>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JS.InvokeVoidAsync("feather.replace");
+    }
+
+    /// <summary>
+    /// Carga todos los trabajos desde la base de datos
+    /// Ordena por fecha de creación descendente (más recientes primero)
+    /// </summary>
+    private async Task LoadJobs()
+    {
+        try
+        {
+            using var ctx = DbFactory.CreateDbContext();
+            jobs = await ctx.Jobs.OrderByDescending(j => j.CreatedAt).ToListAsync();
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Maneja el cambio del filtro de estado
+    /// Reinicia la página a 1 cuando se cambia el filtro
+    /// </summary>
+    private async Task FilterByStatus(ChangeEventArgs e)
+    {
+        selectedStatus = e.Value?.ToString() ?? "";
+        currentPage = 1;
+        ApplyFilter();
+    }
+
+    /// <summary>
+    /// Aplica el filtro de estado a la lista de trabajos
+    /// Recalcula el total de páginas según los trabajos filtrados
+    /// </summary>
+    private void ApplyFilter()
+    {
+        // Si no hay trabajos cargados, no hacer nada
+        if (jobs == null) return;
+
+        // Filtrar por estado seleccionado, o mostrar todos si no hay filtro
+        filteredJobs = string.IsNullOrEmpty(selectedStatus)
+            ? jobs.ToList()
+            : jobs.Where(j => j.CurrentStatus == selectedStatus).ToList();
+
+        // Calcular el total de páginas (mínimo 1)
+        totalPages = Math.Max(1, (int)Math.Ceiling((decimal)filteredJobs.Count / pageSize));
+
+        // Si la página actual es mayor que el total de páginas, ajustar a la última página
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        // Actualizar los trabajos para la página actual
+        UpdatePaginatedJobs();
+    }
+
+    /// <summary>
+    /// Obtiene los trabajos que se deben mostrar en la página actual
+    /// Usa Skip y Take para paginar la lista filtrada
+    /// </summary>
+    private void UpdatePaginatedJobs()
+    {
+        paginatedJobs = filteredJobs
+            .Skip((currentPage - 1) * pageSize)  // Saltar los trabajos de páginas anteriores
+            .Take(pageSize)                       // Tomar solo el pageSize de trabajos
+            .ToList();
+    }
+
+    /// <summary>
+    /// Navega a una página específica
+    /// Valida que el número de página sea válido antes de cambiar
+    /// </summary>
+    private void GoToPage(int pageNumber)
+    {
+        // Validar que el número de página esté en rango válido
+        if (pageNumber >= 1 && pageNumber <= totalPages)
+        {
+            currentPage = pageNumber;
+            UpdatePaginatedJobs();
+        }
     }
 }

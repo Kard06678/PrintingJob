@@ -1,82 +1,211 @@
 ﻿@page "/create-job"
+@page "/job/edit/{Id:int}"
 @using PrintingJob.Models
 @using PrintingJob.Data
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
-<h3>Register New Job</h3>
+<h3>
+    <i class="align-middle me-2" data-feather="@(Id == 0 ? "file-plus" : "edit")"></i>
+    @(Id == 0 ? "Register New Job" : "Edit Job")
+</h3>
+<hr />
 
-<EditForm Model="newJob" OnValidSubmit="HandleCreateJob">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+@if (!string.IsNullOrEmpty(mensaje))
+{
+    <div class="alert alert-danger">@mensaje</div>
+}
 
-    <div class="mb-3">
-        <label for="clientName" class="form-label">Client Name</label>
-        <InputText id="clientName" class="form-control" @bind-Value="newJob.ClientName" />
-    </div>
+@if (job == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="job">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-    <div class="mb-3">
-        <label for="jobName" class="form-label">Job Name</label>
-        <InputText id="jobName" class="form-control" @bind-Value="newJob.JobName" />
-    </div>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label class="form-label">Client Name</label>
+                    <InputText class="form-control" @bind-Value="job.ClientName" />
+                </div>
+            </div>
 
-    <div class="mb-3">
-        <label for="quantity" class="form-label">Quantity</label>
-        <InputNumber id="quantity" class="form-control" @bind-Value="newJob.Quantity" />
-    </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label class="form-label">Job Name</label>
+                    <InputText class="form-control" @bind-Value="job.JobName" />
+                </div>
+            </div>
 
-    <div class="mb-3">
-        <label for="carrier" class="form-label">Carrier</label>
-        <InputSelect id="carrier" class="form-select" @bind-Value="newJob.Carrier">
-            <option value="USPS">USPS</option>
-            <option value="UPS">UPS</option>
-            <option value="FedEx">FedEx</option>
-        </InputSelect>
-    </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label class="form-label">Quantity</label>
+                    <InputNumber class="form-control" @bind-Value="job.Quantity" />
+                </div>
+            </div>
 
-    <div class="mb-3">
-        <label for="slaMailBy" class="form-label">SLA Mail By</label>
-        <InputDate id="slaMailBy" class="form-control" @bind-Value="newJob.SLA_MailBy" />
-    </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label class="form-label">Carrier</label>
+                    <InputSelect class="form-select" @bind-Value="job.Carrier">
+                        <option value="">-- Select Carrier --</option>
+                        <option value="USPS">USPS</option>
+                        <option value="UPS">UPS</option>
+                        <option value="FedEx">FedEx</option>
+                    </InputSelect>
+                </div>
+            </div>
 
-    <button class="btn btn-success" type="submit">Register Job</button>
-    <a class="btn btn-secondary" href="/JobList">Cancel</a>
-</EditForm>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label class="form-label">SLA Mail By</label>
+                    <InputDate class="form-control" @bind-Value="job.SLA_MailBy" />
+                </div>
+            </div>
+        </div>
+
+        <br />
+
+        <button type="button" class="btn @(Id == 0 ? "btn-success" : "btn-warning")" @onclick="Save">
+            <i class="align-middle me-2" data-feather="@(Id == 0 ? "plus" : "save")"></i>
+            @(Id == 0 ? "Register Job" : "Update Job")
+        </button>
+        <a class="btn btn-secondary ms-2" href="/JobList">
+            <i class="align-middle me-2" data-feather="x"></i>
+            Cancel
+        </a>
+    </EditForm>
+}
 
 @code {
-    private Job newJob = new Job();
+    // Usar Id en lugar de JobId para seguir el patrón
+    [Parameter]
+    public int Id { get; set; }
 
-    private async Task HandleCreateJob()
+    // Variables
+    private Job? job;
+    private string mensaje = "";
+
+    /// <summary>
+    /// Se ejecuta cuando se inicializa el componente
+    /// </summary>
+    protected override async Task OnInitializedAsync()
     {
-        // Asignar valores adicionales
+        using var ctx = DbFactory.CreateDbContext();
+
+        if (Id == 0)
+        {
+            // Crear nuevo trabajo
+            job = new Job();
+            job.SLA_MailBy = DateTime.Today;
+        }
+        else
+        {
+            // Editar trabajo existente
+            job = await ctx.Jobs.FirstOrDefaultAsync(j => j.Id == Id);
+        }
+    }
+
+    /// <summary>
+    /// Se ejecuta después de que el componente se ha renderizado
+    /// Inicializa los iconos de Feather
+    /// </summary>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("feather.replace");
+        }
+    }
+
+    /// <summary>
+    /// Guarda el trabajo en la base de datos
+    /// </summary>
+    private async Task Save()
+    {
+        mensaje = "";
+
+        if (job == null)
+        {
+            mensaje = "Error loading job";
+            return;
+        }
+
+        // Validar que los campos requeridos no estén vacíos
+        if (string.IsNullOrWhiteSpace(job.ClientName))
+        {
+            mensaje = "Client Name is required";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(job.JobName))
+        {
+            mensaje = "Job Name is required";
+            return;
+        }
+
+        if (job.Quantity <= 0)
+        {
+            mensaje = "Quantity must be greater than 0";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(job.Carrier))
+        {
+            mensaje = "Carrier is required";
+            return;
+        }
+
+        if (job.SLA_MailBy == default)
+        {
+            mensaje = "SLA Mail By date is required";
+            return;
+        }
+
         try
         {
-            newJob.CreatedAt = DateTime.Now;
-            newJob.CurrentStatus = "Received";
-
-            // Guardar en la base de datos
             using var ctx = DbFactory.CreateDbContext();
-            ctx.Jobs.Add(newJob);
-            await ctx.SaveChangesAsync(); // Guardar el trabajo primero para generar el ID
 
-            // Crear el historial inicial
-            var history = new JobStatusHistory
+            if (Id == 0)
             {
-                JobId = newJob.Id, // Ahora el ID del trabajo está disponible
-                Status = "Received",
-                Note = "Job registered",
-                ChangedAt = DateTime.Now
-            };
-            ctx.JobStatusHistories.Add(history);
+                // Insertar nuevo trabajo
+                job.CreatedAt = DateTime.Now;
+                job.CurrentStatus = "Received";
 
-            await ctx.SaveChangesAsync(); // Guardar el historial
+                ctx.Jobs.Add(job);
+                await ctx.SaveChangesAsync();
+
+                // Crear historial inicial
+                var history = new JobStatusHistory
+                {
+                    JobId = job.Id,
+                    Status = "Received",
+                    Note = "Job registered",
+                    ChangedAt = DateTime.Now
+                };
+
+                ctx.JobStatusHistories.Add(history);
+                await ctx.SaveChangesAsync();
+            }
+            else
+            {
+                // Actualizar trabajo existente
+                ctx.Jobs.Update(job);
+                await ctx.SaveChangesAsync();
+            }
+
+            // Redirigir al listado
             Navigation.NavigateTo("/JobList");
         }
-        catch(Exception Ex)
+        catch (Exception ex)
         {
-            string error = Ex.Message;
+            mensaje = $"Error: {ex.Message}";
         }
-        // Redirigir al listado
     }
 }

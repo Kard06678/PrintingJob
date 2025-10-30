@@ -1,44 +1,54 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">PrintingJob</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-</div>
+﻿<nav id="sidebar" class="sidebar js-sidebar">
+    <div class="sidebar-content js-simplebar">
+        <a class="sidebar-brand" href="/">
+            <span class="align-middle">Printing Job</span>
+        </a>
 
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="oi oi-plus" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="fetchdata">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="JobList">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Lista Trabajo
-            </NavLink>
-        </div>
-    </nav>
-</div>
+        <ul class="sidebar-nav">
+            <li class="sidebar-header">
+                Pages
+            </li>
+
+            
+
+            <li class="sidebar-item">
+                <NavLink class="sidebar-link" href="/JobList">
+                    <i class="align-middle" data-feather="check-square"></i>
+                    <span class="align-middle">Jobs</span>
+                </NavLink>
+            </li>
+
+
+            <li class="sidebar-item">
+                <NavLink class="sidebar-link" href="/" >
+                    <i class="align-middle" data-feather="sliders"></i>
+                    <span class="align-middle">Job Status History</span>
+                </NavLink>
+            </li>
+
+            <li class="sidebar-item">
+                <NavLink class="sidebar-link" href="/Listado">
+                    <i class="align-middle" data-feather="users"></i>
+                    <span class="align-middle">People</span>
+                </NavLink>
+            </li>
+
+            
+        </ul>
+
+
+    </div>
+</nav>
 
 @code {
-    private bool collapseNavMenu = true;
-
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        collapseNavMenu = !collapseNavMenu;
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("feather.replace");
+        }
     }
+
+    [Inject]
+    private IJSRuntime JS { get; set; } = null!;
 }

@@ -1,19 +1,62 @@
 ﻿@inherits LayoutComponentBase
+@implements IAsyncDisposable
+@inject IJSRuntime JS
 
-<PageTitle>PrintingJob</PageTitle>
+<PageTitle>Printing Job</PageTitle>
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
+
+<div class="wrapper">
+    <NavMenu />
+
+    <div class="main">
+        <Navbar />
+
+        <main class="content">
+            <div class="container-fluid p-0">
+                @Body
+            </div>
+        </main>
+
+        <Footer />
     </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
 </div>
+
+<script src="js/app.js"></script>
+<!-- Referencias a JS de AdminKit (al final) -->
+
+
+
+@code {
+    private IJSObjectReference? module;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/app.js");
+                await module.InvokeVoidAsync("initializeApp");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading JS: {ex.Message}");
+            }
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module is not null)
+        {
+            try
+            {
+                await module.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error disposing module: {ex.Message}");
+            }
+        }
+    }
+}
