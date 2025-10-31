@@ -48,20 +48,18 @@ cd C:\Users\oscar\Desktop\PrintingJob\PrintingJob1
 
 # 3) si no tiene dotnet-ef
 dotnet tool install --global dotnet-ef
-# o si ya la tiene:
-# dotnet tool update --global dotnet-ef
 
-# 4) Restaurar y compilar (asegúrate que todo compila)
+# 3) si ya tiene dotnet-ef
+dotnet tool update --global dotnet-ef
+
+# 4) Restaurar y compilar 
 dotnet restore
 dotnet build
 
-# 5) (Si aún NO tienes migraciones) crear la migración inicial
-dotnet ef migrations add InitialCreate --verbose
+# 5) crear la migracion 
+dotnet ef migrations add MigracionImport --verbose
 
-# 6) Generar script idempotente de todas las migraciones (migrations.sql)
-dotnet ef migrations script --idempotent -o migrations.sql --verbose
-
--actualizar base de datos
+# 6) actualizar base de datos
 dotnet ef database update --verbose
 
 
