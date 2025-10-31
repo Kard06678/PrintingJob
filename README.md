@@ -39,27 +39,27 @@ Limitacion 2: Notificaciones
 
 ### Comandos Para Correr ENTITY Framework localdb
 Abrir CMD o Powershell
-# 1) Ir a la carpeta del repo y listar los .csproj 
+### 1 Ir a la carpeta del repo y listar los .csproj 
 cd C:\Users\oscar\Desktop\PrintingJob\PrintingJob
 dir -Recurse -Filter *.csproj
 
-# 2) Entrar a la carpeta del proyecto que contiene el .csproj 
+### 2) Entrar a la carpeta del proyecto que contiene el .csproj 
 cd C:\Users\oscar\Desktop\PrintingJob\PrintingJob1
 
-# 3) si no tiene dotnet-ef
+### 3) si no tiene dotnet-ef
 dotnet tool install --global dotnet-ef
 
-# 4) si ya tiene dotnet-ef
+### 4) si ya tiene dotnet-ef
 dotnet tool update --global dotnet-ef
 
-# 5) Restaurar y compilar 
+### 5) Restaurar y compilar 
 dotnet restore
 dotnet build
 
-# 6) crear la migracion 
+### 6) crear la migracion 
 dotnet ef migrations add MigracionImport --verbose
 
-# 7) actualizar base de datos
+### 7) actualizar base de datos
 dotnet ef database update --verbose
 
 
