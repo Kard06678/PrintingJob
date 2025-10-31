@@ -49,17 +49,17 @@ cd C:\Users\oscar\Desktop\PrintingJob\PrintingJob1
 # 3) si no tiene dotnet-ef
 dotnet tool install --global dotnet-ef
 
-# 3) si ya tiene dotnet-ef
+# 4) si ya tiene dotnet-ef
 dotnet tool update --global dotnet-ef
 
-# 4) Restaurar y compilar 
+# 5) Restaurar y compilar 
 dotnet restore
 dotnet build
 
-# 5) crear la migracion 
+# 6) crear la migracion 
 dotnet ef migrations add MigracionImport --verbose
 
-# 6) actualizar base de datos
+# 7) actualizar base de datos
 dotnet ef database update --verbose
 
 
