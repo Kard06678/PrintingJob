@@ -4,13 +4,10 @@
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject NavigationManager Navigation
-@inject IJSRuntime JS
-
-@* ... (El resto del código HTML/Razor no cambia, es idéntico al tuyo) ... *@
 
 <div class="mb-4">
     <a href="/JobList" class="btn btn-secondary">
-        <i class="align-middle me-2" data-feather="arrow-left"></i>
+        <i class="fa fa-arrow-left align-middle me-2"></i>
         Back to List
     </a>
 </div>
@@ -24,7 +21,7 @@ else
     @if (!string.IsNullOrEmpty(mensaje))
     {
         <div class="alert @(esError ? "alert-danger" : "alert-success")">
-            <i class="align-middle me-2" data-feather="@(esError ? "alert-circle" : "check-circle")"></i>
+            <i class="fa @(esError ? "fa-exclamation-circle" : "fa-check-circle") align-middle me-2"></i>
             @mensaje
         </div>
     }
@@ -34,31 +31,31 @@ else
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="text-center @(job.CurrentStatus == "Received" ? "fw-bold" : "")">
-                    <i class="align-middle" data-feather="package" style="width: 24px; height: 24px; color: @(job.CurrentStatus == "Received" ? "#007bff" : "#ccc");"></i>
+                    <i class="fa fa-box align-middle" style="font-size: 24px; color: @(job.CurrentStatus == "Received" ? "#007bff" : "#ccc");"></i>
                     <p class="small mt-1">Received</p>
                 </div>
                 <div class="flex-grow-1 mx-2" style="height: 2px; background: @(IsStatusPassed("Received") ? "#007bff" : "#ccc");"></div>
 
                 <div class="text-center @(job.CurrentStatus == "Printing" ? "fw-bold" : "")">
-                    <i class="align-middle" data-feather="printer" style="width: 24px; height: 24px; color: @(IsStatusPassed("Printing") ? "#0dcaf0" : "#ccc");"></i>
+                    <i class="fa fa-print align-middle" style="font-size: 24px; color: @(IsStatusPassed("Printing") ? "#0dcaf0" : "#ccc");"></i>
                     <p class="small mt-1">Printing</p>
                 </div>
                 <div class="flex-grow-1 mx-2" style="height: 2px; background: @(IsStatusPassed("Printing") ? "#0dcaf0" : "#ccc");"></div>
 
                 <div class="text-center @(job.CurrentStatus == "Inserting" ? "fw-bold" : "")">
-                    <i class="align-middle" data-feather="layers" style="width: 24px; height: 24px; color: @(IsStatusPassed("Inserting") ? "#ffc107" : "#ccc");"></i>
+                    <i class="fa fa-layer-group align-middle" style="font-size: 24px; color: @(IsStatusPassed("Inserting") ? "#ffc107" : "#ccc");"></i>
                     <p class="small mt-1">Inserting</p>
                 </div>
                 <div class="flex-grow-1 mx-2" style="height: 2px; background: @(IsStatusPassed("Inserting") ? "#ffc107" : "#ccc");"></div>
 
                 <div class="text-center @(job.CurrentStatus == "Mailed" ? "fw-bold" : "")">
-                    <i class="align-middle" data-feather="mail" style="width: 24px; height: 24px; color: @(IsStatusPassed("Mailed") ? "#198754" : "#ccc");"></i>
+                    <i class="fa fa-envelope align-middle" style="font-size: 24px; color: @(IsStatusPassed("Mailed") ? "#198754" : "#ccc");"></i>
                     <p class="small mt-1">Mailed</p>
                 </div>
                 <div class="flex-grow-1 mx-2" style="height: 2px; background: @(IsStatusPassed("Mailed") ? "#198754" : "#ccc");"></div>
 
                 <div class="text-center @(job.CurrentStatus == "Delivered" ? "fw-bold" : "")">
-                    <i class="align-middle" data-feather="check-circle" style="width: 24px; height: 24px; color: @(IsStatusPassed("Delivered") ? "#28a745" : "#ccc");"></i>
+                    <i class="fa fa-check-circle align-middle" style="font-size: 24px; color: @(IsStatusPassed("Delivered") ? "#28a745" : "#ccc");"></i>
                     <p class="small mt-1">Delivered</p>
                 </div>
             </div>
@@ -71,7 +68,7 @@ else
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="align-middle me-2" data-feather="briefcase"></i>
+                        <i class="fa fa-briefcase align-middle me-2"></i>
                         Job Details
                     </h5>
                 </div>
@@ -161,7 +158,7 @@ else
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="align-middle me-2" data-feather="clock"></i>
+                        <i class="fa fa-clock align-middle me-2"></i>
                         Status History
                     </h5>
                 </div>
@@ -187,7 +184,7 @@ else
                                         @if (!string.IsNullOrEmpty(h.Note))
                                         {
                                             <small class="text-muted d-block mt-1">
-                                                <i class="align-middle me-1" data-feather="message-square"></i>
+                                                <i class="fa fa-comment-alt align-middle me-1"></i>
                                                 @h.Note
                                             </small>
                                         }
@@ -203,7 +200,7 @@ else
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="align-middle me-2" data-feather="settings"></i>
+                        <i class="fa fa-cogs align-middle me-2"></i>
                         Actions
                     </h5>
                 </div>
@@ -218,14 +215,14 @@ else
                                 }
                                 else
                                 {
-                                    <i class="align-middle me-2" data-feather="arrow-right"></i>
+                                    <i class="fa fa-arrow-right align-middle me-2"></i>
                                 }
                                 Advance Status
                             </button>
                         }
 
                         <a href="/job/edit/@job.Id" class="btn btn-warning">
-                            <i class="align-middle me-2" data-feather="edit"></i>
+                            <i class="fa fa-edit align-middle me-2"></i>
                             Edit Job
                         </a>
                     </div>
@@ -238,7 +235,7 @@ else
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title mb-0">
-                            <i class="align-middle me-2" data-feather="alert-triangle"></i>
+                            <i class="fa fa-exclamation-triangle align-middle me-2"></i>
                             Mark as Exception
                         </h5>
                     </div>
@@ -254,7 +251,7 @@ else
                             }
                             else
                             {
-                                <i class="align-middle me-2" data-feather="alert-triangle"></i>
+                                <i class="fa fa-exclamation-triangle align-middle me-2"></i>
                             }
                             Mark Job as Exception
                         </button>
@@ -291,23 +288,12 @@ else
     private bool esError = false;
     private bool isLoading = false;
     private string exceptionNote = "";
-    private bool ShowException = false;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadJobAndHistory();
     }
 
-    // CAMBIO 1: OnAfterRenderAsync vuelve para manejar la carga inicial de los íconos de forma segura.
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await JS.InvokeVoidAsync("feather.replace");
-        }
-    }
-
-    // CAMBIO 2: El parámetro 'isInitialLoad' se elimina, ya no es necesario.
     private async Task LoadJobAndHistory()
     {
         isLoading = true;
@@ -361,6 +347,7 @@ else
 
         isLoading = true;
         mensaje = "";
+        await InvokeAsync(StateHasChanged);
 
         try
         {
@@ -397,9 +384,8 @@ else
 
             await InvokeAsync(() =>
             {
-                mensaje = $"Status successfully advanced to {nextStatus}";
+                mensaje = $"Status successfully advanced to {job?.CurrentStatus}";
                 esError = false;
-                StateHasChanged();
             });
         }
         catch (Exception ex)
@@ -408,15 +394,12 @@ else
             {
                 mensaje = $"Error: {ex.Message}";
                 esError = true;
-                StateHasChanged();
             });
         }
         finally
         {
             isLoading = false;
             await InvokeAsync(StateHasChanged);
-            // Se mantiene la llamada manual para redibujar los íconos después de la acción.
-            await JS.InvokeVoidAsync("feather.replace");
         }
     }
 
@@ -437,6 +420,7 @@ else
 
         isLoading = true;
         mensaje = "";
+        await InvokeAsync(StateHasChanged);
 
         try
         {
@@ -464,8 +448,6 @@ else
                 mensaje = "Job marked as Exception";
                 esError = false;
                 exceptionNote = "";
-                ShowException = false;
-                StateHasChanged();
             });
         }
         catch (Exception ex)
@@ -474,15 +456,12 @@ else
             {
                 mensaje = $"Error: {ex.Message}";
                 esError = true;
-                StateHasChanged();
             });
         }
         finally
         {
             isLoading = false;
             await InvokeAsync(StateHasChanged);
-            // Se mantiene la llamada manual para redibujar los íconos después de la acción.
-            await JS.InvokeVoidAsync("feather.replace");
         }
     }
 }

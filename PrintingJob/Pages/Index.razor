@@ -80,18 +80,9 @@ else
                                 <span class="badge bg-light text-dark">@j.Quantity</span>
                             </td>
                             <td>
-                                @switch (j.Carrier)
-                                {
-                                    case "USPS":
-                                        <span class="badge bg-info">USPS</span>
-                                        break;
-                                    case "UPS":
-                                        <span class="badge bg-warning">UPS</span>
-                                        break;
-                                    case "FedEx":
-                                        <span class="badge bg-danger">FedEx</span>
-                                        break;
-                                }
+                               
+                                <span class="">@j.Carrier</span>
+
                             </td>
                             <td>
                                 @switch (j.CurrentStatus)
