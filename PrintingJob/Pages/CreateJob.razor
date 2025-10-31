@@ -9,7 +9,7 @@
 
 <h3>
     <i class="align-middle me-2" data-feather="@(Id == 0 ? "file-plus" : "edit")"></i>
-    @(Id == 0 ? "Register New Job" : "Edit Job")
+    @(Id == 0 ? "Create New Job" : "Edit Job")
 </h3>
 <hr />
 
@@ -28,105 +28,88 @@ else
         <DataAnnotationsValidator />
         <ValidationSummary />
 
+        @if (Id > 0)
+        {
+            <div class="mb-3" style="display:none">
+                <label class="form-label">Job ID</label>
+                <InputNumber class="form-control" @bind-Value="job.Id" disabled />
+            </div>
+        }
+
         <div class="row">
             <div class="col-md-3">
-                <div class="mb-3">
-                    <label class="form-label">Client Name</label>
-                    <InputText class="form-control" @bind-Value="job.ClientName" />
-                </div>
+                <label class="form-label">Client Name</label>
+                <InputText class="form-control" @bind-Value="job.ClientName" />
             </div>
 
             <div class="col-md-3">
-                <div class="mb-3">
-                    <label class="form-label">Job Name</label>
-                    <InputText class="form-control" @bind-Value="job.JobName" />
-                </div>
+                <label class="form-label">Job Name</label>
+                <InputText class="form-control" @bind-Value="job.JobName" />
             </div>
 
             <div class="col-md-3">
-                <div class="mb-3">
-                    <label class="form-label">Quantity</label>
-                    <InputNumber class="form-control" @bind-Value="job.Quantity" />
-                </div>
+                <label class="form-label">Quantity</label>
+                <InputNumber class="form-control" @bind-Value="job.Quantity" />
             </div>
 
             <div class="col-md-3">
-                <div class="mb-3">
-                    <label class="form-label">Carrier</label>
-                    <InputSelect class="form-select" @bind-Value="job.Carrier">
-                        <option value="">-- Select Carrier --</option>
-                        <option value="USPS">USPS</option>
-                        <option value="UPS">UPS</option>
-                        <option value="FedEx">FedEx</option>
-                    </InputSelect>
-                </div>
+                <label class="form-label">Carrier</label>
+                <InputSelect class="form-select" @bind-Value="job.Carrier">
+                    <option value="">-- Select Carrier --</option>
+                    <option value="USPS">USPS</option>
+                    <option value="UPS">UPS</option>
+                    <option value="FedEx">FedEx</option>
+                </InputSelect>
             </div>
 
             <div class="col-md-3">
-                <div class="mb-3">
-                    <label class="form-label">SLA Mail By</label>
-                    <InputDate class="form-control" @bind-Value="job.SLA_MailBy" />
-                </div>
+                <label class="form-label">SLA Mail By</label>
+                <InputDate class="form-control" @bind-Value="job.SLA_MailBy" />
             </div>
         </div>
 
         <br />
 
-        <button type="button" class="btn @(Id == 0 ? "btn-success" : "btn-warning")" @onclick="Save">
-            <i class="align-middle me-2" data-feather="@(Id == 0 ? "plus" : "save")"></i>
-            @(Id == 0 ? "Register Job" : "Update Job")
-        </button>
-        <a class="btn btn-secondary ms-2" href="/JobList">
-            <i class="align-middle me-2" data-feather="x"></i>
-            Cancel
-        </a>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn @(Id == 0 ? "btn-success" : "btn-warning")" @onclick="Save">
+                <i class="align-middle me-2" data-feather="@(Id == 0 ? "plus" : "save")"></i>
+                @(Id == 0 ? "Register Job" : "Update Job")
+            </button>
+            <a class="btn btn-secondary" href="/JobList">
+                <i class="align-middle me-2" data-feather="x"></i>
+                Cancel
+            </a>
+        </div>
     </EditForm>
 }
 
 @code {
-    // Usar Id en lugar de JobId para seguir el patrón
     [Parameter]
     public int Id { get; set; }
 
-    // Variables
     private Job? job;
     private string mensaje = "";
 
-    /// <summary>
-    /// Se ejecuta cuando se inicializa el componente
-    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         using var ctx = DbFactory.CreateDbContext();
 
         if (Id == 0)
         {
-            // Crear nuevo trabajo
             job = new Job();
             job.SLA_MailBy = DateTime.Today;
         }
         else
         {
-            // Editar trabajo existente
             job = await ctx.Jobs.FirstOrDefaultAsync(j => j.Id == Id);
         }
     }
 
-    /// <summary>
-    /// Se ejecuta después de que el componente se ha renderizado
-    /// Inicializa los iconos de Feather
-    /// </summary>
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            await JS.InvokeVoidAsync("feather.replace");
-        }
+        await JS.InvokeVoidAsync("feather.replace");
     }
 
-    /// <summary>
-    /// Guarda el trabajo en la base de datos
-    /// </summary>
     private async Task Save()
     {
         mensaje = "";
@@ -137,7 +120,6 @@ else
             return;
         }
 
-        // Validar que los campos requeridos no estén vacíos
         if (string.IsNullOrWhiteSpace(job.ClientName))
         {
             mensaje = "Client Name is required";
@@ -174,14 +156,12 @@ else
 
             if (Id == 0)
             {
-                // Insertar nuevo trabajo
                 job.CreatedAt = DateTime.Now;
                 job.CurrentStatus = "Received";
 
                 ctx.Jobs.Add(job);
                 await ctx.SaveChangesAsync();
 
-                // Crear historial inicial
                 var history = new JobStatusHistory
                 {
                     JobId = job.Id,
@@ -195,12 +175,10 @@ else
             }
             else
             {
-                // Actualizar trabajo existente
                 ctx.Jobs.Update(job);
                 await ctx.SaveChangesAsync();
             }
 
-            // Redirigir al listado
             Navigation.NavigateTo("/JobList");
         }
         catch (Exception ex)

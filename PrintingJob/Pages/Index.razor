@@ -23,8 +23,9 @@
     </div>
 </div>
 
-<!-- Filtro por estado -->
+<!-- Filtro de Estado -->
 <div class="mb-3">
+    <label class="form-label">Status</label>
     <select class="form-select" @onchange="FilterByStatus" style="max-width: 200px;">
         <option value="">All Status</option>
         <option value="Received">Received</option>
@@ -119,10 +120,10 @@ else
                                 <small>@j.CreatedAt.ToString("yyyy-MM-dd HH:mm")</small>
                             </td>
                             <td>
-                                <a class="btn btn-sm btn-outline-info" href="/job-detail/@j.Id" title="View Details">
+                                <a class="btn btn-info" href="/job-detail/@j.Id" title="View Details">
                                     <i data-feather="eye"></i>
                                 </a>
-                                <a class="btn btn-sm btn-outline-warning" href="/job/edit/@j.Id" title="Edit Job">
+                                <a class="btn btn-warning" href="/job/edit/@j.Id" title="Edit Job">
                                     <i data-feather="edit"></i>
                                 </a>
                             </td>
@@ -133,7 +134,7 @@ else
         </div>
     </div>
 
-    <!-- Paginación muy simple -->
+    <!-- Paginación -->
     @if (totalPages > 1)
     {
         <div class="d-flex justify-content-center align-items-center gap-2 mt-4">
@@ -160,19 +161,18 @@ else
         </div>
 
         <div class="text-center text-muted mt-3">
-            <small>Page @currentPage of @totalPages</small>
+            <small>Page @currentPage of @totalPages | Total: @filteredJobs.Count jobs</small>
         </div>
     }
 }
 
 @code {
-    /// <summary>
     /// Lista completa de todos los trabajos desde la base de datos
-    /// </summary>
+    /// Ordenada por fecha descendente (más recientes primero - NEWEST FIRST)
     private List<Job>? jobs;
 
     /// <summary>
-    /// Lista filtrada de trabajos (después de aplicar filtro de estado)
+    /// Lista filtrada de trabajos (mantiene el orden descendente)
     /// </summary>
     private List<Job> filteredJobs = new();
 
@@ -221,7 +221,7 @@ else
 
     /// <summary>
     /// Carga todos los trabajos desde la base de datos
-    /// Ordena por fecha de creación descendente (más recientes primero)
+    /// Ordena por fecha de creación descendente (NEWEST FIRST - más recientes primero)
     /// </summary>
     private async Task LoadJobs()
     {
@@ -229,7 +229,7 @@ else
         {
             using var ctx = DbFactory.CreateDbContext();
             jobs = await ctx.Jobs.OrderByDescending(j => j.CreatedAt).ToListAsync();
-            ApplyFilter();
+            ApplyFilters();
         }
         catch (Exception ex)
         {
@@ -241,23 +241,25 @@ else
     /// Maneja el cambio del filtro de estado
     /// Reinicia la página a 1 cuando se cambia el filtro
     /// </summary>
-    private async Task FilterByStatus(ChangeEventArgs e)
+    private void FilterByStatus(ChangeEventArgs e)
     {
         selectedStatus = e.Value?.ToString() ?? "";
         currentPage = 1;
-        ApplyFilter();
+        ApplyFilters();
     }
 
     /// <summary>
     /// Aplica el filtro de estado a la lista de trabajos
+    /// Mantiene el orden descendente (NEWEST FIRST)
     /// Recalcula el total de páginas según los trabajos filtrados
     /// </summary>
-    private void ApplyFilter()
+    private void ApplyFilters()
     {
         // Si no hay trabajos cargados, no hacer nada
         if (jobs == null) return;
 
-        // Filtrar por estado seleccionado, o mostrar todos si no hay filtro
+        // Aplicar filtro de estado
+        // Si no hay estado seleccionado, mostrar todos
         filteredJobs = string.IsNullOrEmpty(selectedStatus)
             ? jobs.ToList()
             : jobs.Where(j => j.CurrentStatus == selectedStatus).ToList();
@@ -270,6 +272,9 @@ else
 
         // Actualizar los trabajos para la página actual
         UpdatePaginatedJobs();
+
+        // Forzar re-render
+        StateHasChanged();
     }
 
     /// <summary>
@@ -279,8 +284,8 @@ else
     private void UpdatePaginatedJobs()
     {
         paginatedJobs = filteredJobs
-            .Skip((currentPage - 1) * pageSize)  // Saltar los trabajos de páginas anteriores
-            .Take(pageSize)                       // Tomar solo el pageSize de trabajos
+            .Skip((currentPage - 1) * pageSize)
+            .Take(pageSize)
             .ToList();
     }
 
@@ -295,6 +300,7 @@ else
         {
             currentPage = pageNumber;
             UpdatePaginatedJobs();
+            StateHasChanged();
         }
     }
 }

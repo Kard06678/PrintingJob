@@ -1,0 +1,488 @@
+﻿@page "/job-detail/{Id:int}"
+@using PrintingJob.Models
+@using PrintingJob.Data
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+@* ... (El resto del código HTML/Razor no cambia, es idéntico al tuyo) ... *@
+
+<div class="mb-4">
+    <a href="/JobList" class="btn btn-secondary">
+        <i class="align-middle me-2" data-feather="arrow-left"></i>
+        Back to List
+    </a>
+</div>
+
+@if (job == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(esError ? "alert-danger" : "alert-success")">
+            <i class="align-middle me-2" data-feather="@(esError ? "alert-circle" : "check-circle")"></i>
+            @mensaje
+        </div>
+    }
+
+    <!-- Status Flow Indicator -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-center @(job.CurrentStatus == "Received" ? "fw-bold" : "")">
+                    <i class="align-middle" data-feather="package" style="width: 24px; height: 24px; color: @(job.CurrentStatus == "Received" ? "#007bff" : "#ccc");"></i>
+                    <p class="small mt-1">Received</p>
+                </div>
+                <div class="flex-grow-1 mx-2" style="height: 2px; background: @(IsStatusPassed("Received") ? "#007bff" : "#ccc");"></div>
+
+                <div class="text-center @(job.CurrentStatus == "Printing" ? "fw-bold" : "")">
+                    <i class="align-middle" data-feather="printer" style="width: 24px; height: 24px; color: @(IsStatusPassed("Printing") ? "#0dcaf0" : "#ccc");"></i>
+                    <p class="small mt-1">Printing</p>
+                </div>
+                <div class="flex-grow-1 mx-2" style="height: 2px; background: @(IsStatusPassed("Printing") ? "#0dcaf0" : "#ccc");"></div>
+
+                <div class="text-center @(job.CurrentStatus == "Inserting" ? "fw-bold" : "")">
+                    <i class="align-middle" data-feather="layers" style="width: 24px; height: 24px; color: @(IsStatusPassed("Inserting") ? "#ffc107" : "#ccc");"></i>
+                    <p class="small mt-1">Inserting</p>
+                </div>
+                <div class="flex-grow-1 mx-2" style="height: 2px; background: @(IsStatusPassed("Inserting") ? "#ffc107" : "#ccc");"></div>
+
+                <div class="text-center @(job.CurrentStatus == "Mailed" ? "fw-bold" : "")">
+                    <i class="align-middle" data-feather="mail" style="width: 24px; height: 24px; color: @(IsStatusPassed("Mailed") ? "#198754" : "#ccc");"></i>
+                    <p class="small mt-1">Mailed</p>
+                </div>
+                <div class="flex-grow-1 mx-2" style="height: 2px; background: @(IsStatusPassed("Mailed") ? "#198754" : "#ccc");"></div>
+
+                <div class="text-center @(job.CurrentStatus == "Delivered" ? "fw-bold" : "")">
+                    <i class="align-middle" data-feather="check-circle" style="width: 24px; height: 24px; color: @(IsStatusPassed("Delivered") ? "#28a745" : "#ccc");"></i>
+                    <p class="small mt-1">Delivered</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informacion completa del trabajo -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="align-middle me-2" data-feather="briefcase"></i>
+                        Job Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Job ID</label>
+                        <p class="h5">@job.Id</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Client Name</label>
+                        <p class="h5">@job.ClientName</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Job Name</label>
+                        <p class="h5">@job.JobName</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Quantity</label>
+                        <p class="h5">
+                            <span class="badge bg-light text-dark">@job.Quantity</span>
+                        </p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Carrier</label>
+                        <p class="h5">
+                            @switch (job.Carrier)
+                            {
+                                case "USPS":
+                                    <span class="badge bg-info">USPS</span>
+                                    break;
+                                case "UPS":
+                                    <span class="badge bg-warning">UPS</span>
+                                    break;
+                                case "FedEx":
+                                    <span class="badge bg-danger">FedEx</span>
+                                    break;
+                            }
+                        </p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">SLA Mail By</label>
+                        <p class="h5">@job.SLA_MailBy.ToString("yyyy-MM-dd")</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Current Status</label>
+                        <p class="h5">
+                            @switch (job.CurrentStatus)
+                            {
+                                case "Received":
+                                    <span class="badge bg-primary">Received</span>
+                                    break;
+                                case "Printing":
+                                    <span class="badge bg-info">Printing</span>
+                                    break;
+                                case "Inserting":
+                                    <span class="badge bg-warning">Inserting</span>
+                                    break;
+                                case "Mailed":
+                                    <span class="badge bg-success">Mailed</span>
+                                    break;
+                                case "Delivered":
+                                    <span class="badge bg-success">Delivered</span>
+                                    break;
+                                case "Exception":
+                                    <span class="badge bg-danger">Exception</span>
+                                    break;
+                            }
+                        </p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Created At</label>
+                        <p class="h5">@job.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historial y formulario de excepcion -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="align-middle me-2" data-feather="clock"></i>
+                        Status History
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (history == null)
+                    {
+                        <p><em>Loading history...</em></p>
+                    }
+                    else if (!history.Any())
+                    {
+                        <p class="text-muted">No status history available</p>
+                    }
+                    else
+                    {
+                        <div class="timeline">
+                            @foreach (var h in history.OrderByDescending(x => x.ChangedAt))
+                            {
+                                <div class="timeline-item mb-3">
+                                    <div class="timeline-marker bg-primary"></div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-1">@h.Status</h6>
+                                        <small class="text-muted d-block">@h.ChangedAt.ToString("yyyy-MM-dd HH:mm:ss")</small>
+                                        @if (!string.IsNullOrEmpty(h.Note))
+                                        {
+                                            <small class="text-muted d-block mt-1">
+                                                <i class="align-middle me-1" data-feather="message-square"></i>
+                                                @h.Note
+                                            </small>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Botones para cambiar estado -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="align-middle me-2" data-feather="settings"></i>
+                        Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        @if (job.CurrentStatus != "Delivered" && job.CurrentStatus != "Exception")
+                        {
+                            <button class="btn btn-success" @onclick="AdvanceStatus" disabled="@isLoading">
+                                @if (isLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                }
+                                else
+                                {
+                                    <i class="align-middle me-2" data-feather="arrow-right"></i>
+                                }
+                                Advance Status
+                            </button>
+                        }
+
+                        <a href="/job/edit/@job.Id" class="btn btn-warning">
+                            <i class="align-middle me-2" data-feather="edit"></i>
+                            Edit Job
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario para marcar como excepcion -->
+            @if (job.CurrentStatus != "Exception")
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="align-middle me-2" data-feather="alert-triangle"></i>
+                            Mark as Exception
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Exception Note</label>
+                            <textarea class="form-control" @bind="exceptionNote" rows="4" placeholder="Describe the issue..."></textarea>
+                        </div>
+                        <button class="btn btn-danger w-100" @onclick="MarkAsException" disabled="@isLoading">
+                            @if (isLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            else
+                            {
+                                <i class="align-middle me-2" data-feather="alert-triangle"></i>
+                            }
+                            Mark Job as Exception
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<style>
+    .timeline-item {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        top: 5px;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Job? job;
+    private List<JobStatusHistory>? history;
+    private string mensaje = "";
+    private bool esError = false;
+    private bool isLoading = false;
+    private string exceptionNote = "";
+    private bool ShowException = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadJobAndHistory();
+    }
+
+    // CAMBIO 1: OnAfterRenderAsync vuelve para manejar la carga inicial de los íconos de forma segura.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("feather.replace");
+        }
+    }
+
+    // CAMBIO 2: El parámetro 'isInitialLoad' se elimina, ya no es necesario.
+    private async Task LoadJobAndHistory()
+    {
+        isLoading = true;
+        try
+        {
+            using var ctx = DbFactory.CreateDbContext();
+
+            var dbJob = await ctx.Jobs.FirstOrDefaultAsync(j => j.Id == Id);
+            var dbHistory = await ctx.JobStatusHistories
+                                      .Where(h => h.JobId == Id)
+                                      .OrderBy(h => h.ChangedAt)
+                                      .ToListAsync();
+
+            await InvokeAsync(() =>
+            {
+                job = dbJob;
+                history = dbHistory;
+                mensaje = string.Empty;
+                esError = false;
+                StateHasChanged();
+            });
+        }
+        catch (Exception ex)
+        {
+            await InvokeAsync(() =>
+            {
+                mensaje = $"Error loading job: {ex.Message}";
+                esError = true;
+                StateHasChanged();
+            });
+        }
+        finally
+        {
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private bool IsStatusPassed(string status)
+    {
+        if (job == null) return false;
+        var statusOrder = new[] { "Received", "Printing", "Inserting", "Mailed", "Delivered" };
+        var currentIndex = Array.IndexOf(statusOrder, job.CurrentStatus);
+        var checkIndex = Array.IndexOf(statusOrder, status);
+        return checkIndex <= currentIndex;
+    }
+
+    private async Task AdvanceStatus()
+    {
+        if (job == null) return;
+
+        isLoading = true;
+        mensaje = "";
+
+        try
+        {
+            string nextStatus;
+            using (var ctx = DbFactory.CreateDbContext())
+            {
+                var jobFromDb = await ctx.Jobs.FirstOrDefaultAsync(j => j.Id == job.Id);
+                if (jobFromDb == null) throw new Exception("Job not found");
+
+                nextStatus = jobFromDb.CurrentStatus switch
+                {
+                    "Received" => "Printing",
+                    "Printing" => "Inserting",
+                    "Inserting" => "Mailed",
+                    "Mailed" => "Delivered",
+                    _ => jobFromDb.CurrentStatus
+                };
+
+                if (nextStatus != jobFromDb.CurrentStatus)
+                {
+                    jobFromDb.CurrentStatus = nextStatus;
+                    ctx.JobStatusHistories.Add(new JobStatusHistory
+                    {
+                        JobId = jobFromDb.Id,
+                        Status = nextStatus,
+                        Note = $"Status advanced to {nextStatus}",
+                        ChangedAt = DateTime.UtcNow
+                    });
+                    await ctx.SaveChangesAsync();
+                }
+            }
+
+            await LoadJobAndHistory();
+
+            await InvokeAsync(() =>
+            {
+                mensaje = $"Status successfully advanced to {nextStatus}";
+                esError = false;
+                StateHasChanged();
+            });
+        }
+        catch (Exception ex)
+        {
+            await InvokeAsync(() =>
+            {
+                mensaje = $"Error: {ex.Message}";
+                esError = true;
+                StateHasChanged();
+            });
+        }
+        finally
+        {
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+            // Se mantiene la llamada manual para redibujar los íconos después de la acción.
+            await JS.InvokeVoidAsync("feather.replace");
+        }
+    }
+
+    private async Task MarkAsException()
+    {
+        if (job == null) return;
+
+        if (string.IsNullOrWhiteSpace(exceptionNote))
+        {
+            await InvokeAsync(() =>
+            {
+                mensaje = "Exception note is required";
+                esError = true;
+                StateHasChanged();
+            });
+            return;
+        }
+
+        isLoading = true;
+        mensaje = "";
+
+        try
+        {
+            using (var ctx = DbFactory.CreateDbContext())
+            {
+                var jobFromDb = await ctx.Jobs.FirstOrDefaultAsync(j => j.Id == job.Id);
+                if (jobFromDb == null) throw new Exception("Job not found");
+
+                jobFromDb.CurrentStatus = "Exception";
+                ctx.JobStatusHistories.Add(new JobStatusHistory
+                {
+                    JobId = jobFromDb.Id,
+                    Status = "Exception",
+                    Note = exceptionNote,
+                    ChangedAt = DateTime.UtcNow
+                });
+
+                await ctx.SaveChangesAsync();
+            }
+
+            await LoadJobAndHistory();
+
+            await InvokeAsync(() =>
+            {
+                mensaje = "Job marked as Exception";
+                esError = false;
+                exceptionNote = "";
+                ShowException = false;
+                StateHasChanged();
+            });
+        }
+        catch (Exception ex)
+        {
+            await InvokeAsync(() =>
+            {
+                mensaje = $"Error: {ex.Message}";
+                esError = true;
+                StateHasChanged();
+            });
+        }
+        finally
+        {
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+            // Se mantiene la llamada manual para redibujar los íconos después de la acción.
+            await JS.InvokeVoidAsync("feather.replace");
+        }
+    }
+}

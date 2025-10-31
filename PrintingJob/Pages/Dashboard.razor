@@ -1,0 +1,243 @@
+﻿@page "/dashboard"
+@using PrintingJob.Models
+@using PrintingJob.Data
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject IJSRuntime JS
+
+<div class="mb-4">
+    <h3>
+        <i class="align-middle me-2" data-feather="bar-chart-2"></i>
+        Dashboard
+    </h3>
+</div>
+
+@if (stats == null)
+{
+    <p><em>Loading dashboard...</em></p>
+}
+else
+{
+    <div class="row">
+        <!-- Card de total de trabajos -->
+        <div class="col-md-2">
+            <div class="card text-center mb-3">
+                <div class="card-body">
+                    <i class="align-middle" data-feather="inbox" style="width: 32px; height: 32px; color: #007bff;"></i>
+                    <h6 class="card-title mt-2 mb-0">Total Jobs</h6>
+                    <h2 class="mb-0">@stats.TotalJobs</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card de trabajos recibidos -->
+        <div class="col-md-2">
+            <div class="card text-center mb-3">
+                <div class="card-body">
+                    <i class="align-middle" data-feather="package" style="width: 32px; height: 32px; color: #6c757d;"></i>
+                    <h6 class="card-title mt-2 mb-0">Received</h6>
+                    <h2 class="mb-0" style="color: #007bff;">@stats.ReceivedCount</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card de trabajos imprimiendo -->
+        <div class="col-md-2">
+            <div class="card text-center mb-3">
+                <div class="card-body">
+                    <i class="align-middle" data-feather="printer" style="width: 32px; height: 32px; color: #0dcaf0;"></i>
+                    <h6 class="card-title mt-2 mb-0">Printing</h6>
+                    <h2 class="mb-0" style="color: #0dcaf0;">@stats.PrintingCount</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card de trabajos insertando -->
+        <div class="col-md-2">
+            <div class="card text-center mb-3">
+                <div class="card-body">
+                    <i class="align-middle" data-feather="layers" style="width: 32px; height: 32px; color: #ffc107;"></i>
+                    <h6 class="card-title mt-2 mb-0">Inserting</h6>
+                    <h2 class="mb-0" style="color: #ffc107;">@stats.InsertingCount</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card de trabajos enviados -->
+        <div class="col-md-2">
+            <div class="card text-center mb-3">
+                <div class="card-body">
+                    <i class="align-middle" data-feather="mail" style="width: 32px; height: 32px; color: #198754;"></i>
+                    <h6 class="card-title mt-2 mb-0">Mailed</h6>
+                    <h2 class="mb-0" style="color: #198754;">@stats.MailedCount</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card de trabajos entregados -->
+        <div class="col-md-2">
+            <div class="card text-center mb-3">
+                <div class="card-body">
+                    <i class="align-middle" data-feather="check-circle" style="width: 32px; height: 32px; color: #28a745;"></i>
+                    <h6 class="card-title mt-2 mb-0">Delivered</h6>
+                    <h2 class="mb-0" style="color: #28a745;">@stats.DeliveredCount</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card de excepciones -->
+        <div class="col-md-2">
+            <div class="card text-center mb-3">
+                <div class="card-body">
+                    <i class="align-middle" data-feather="alert-triangle" style="width: 32px; height: 32px; color: #dc3545;"></i>
+                    <h6 class="card-title mt-2 mb-0">Exceptions</h6>
+                    <h2 class="mb-0" style="color: #dc3545;">@stats.ExceptionCount</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla con resumen detallado de estados -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="align-middle me-2" data-feather="pie-chart"></i>
+                        Status Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Count</th>
+                                    <th>Percentage</th>
+                                    <th>Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-primary">Received</span></td>
+                                    <td>@stats.ReceivedCount</td>
+                                    <td>@string.Format("{0:F1}%", (stats.ReceivedCount / (double)stats.TotalJobs) * 100)</td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-primary" style="width: @((stats.ReceivedCount / (double)stats.TotalJobs) * 100)%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-info">Printing</span></td>
+                                    <td>@stats.PrintingCount</td>
+                                    <td>@string.Format("{0:F1}%", (stats.PrintingCount / (double)stats.TotalJobs) * 100)</td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-info" style="width: @((stats.PrintingCount / (double)stats.TotalJobs) * 100)%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-warning">Inserting</span></td>
+                                    <td>@stats.InsertingCount</td>
+                                    <td>@string.Format("{0:F1}%", (stats.InsertingCount / (double)stats.TotalJobs) * 100)</td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-warning" style="width: @((stats.InsertingCount / (double)stats.TotalJobs) * 100)%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-success">Mailed</span></td>
+                                    <td>@stats.MailedCount</td>
+                                    <td>@string.Format("{0:F1}%", (stats.MailedCount / (double)stats.TotalJobs) * 100)</td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success" style="width: @((stats.MailedCount / (double)stats.TotalJobs) * 100)%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-success">Delivered</span></td>
+                                    <td>@stats.DeliveredCount</td>
+                                    <td>@string.Format("{0:F1}%", (stats.DeliveredCount / (double)stats.TotalJobs) * 100)</td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success" style="width: @((stats.DeliveredCount / (double)stats.TotalJobs) * 100)%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-danger">Exception</span></td>
+                                    <td>@stats.ExceptionCount</td>
+                                    <td>@string.Format("{0:F1}%", (stats.ExceptionCount / (double)stats.TotalJobs) * 100)</td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-danger" style="width: @((stats.ExceptionCount / (double)stats.TotalJobs) * 100)%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // Clase para almacenar las estadisticas del dashboard
+    private class DashboardStats
+    {
+        public int TotalJobs { get; set; }
+        public int ReceivedCount { get; set; }
+        public int PrintingCount { get; set; }
+        public int InsertingCount { get; set; }
+        public int MailedCount { get; set; }
+        public int DeliveredCount { get; set; }
+        public int ExceptionCount { get; set; }
+    }
+
+    // Objeto que contiene las estadisticas
+    private DashboardStats? stats;
+
+    // Se ejecuta cuando se inicializa el componente
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStats();
+    }
+
+    // Se ejecuta despues de cada render para cargar los iconos
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JS.InvokeVoidAsync("feather.replace");
+    }
+
+    // Carga las estadisticas desde la base de datos
+    private async Task LoadStats()
+    {
+        try
+        {
+            using var ctx = DbFactory.CreateDbContext();
+            var jobs = await ctx.Jobs.ToListAsync();
+
+            stats = new DashboardStats
+            {
+                TotalJobs = jobs.Count,
+                ReceivedCount = jobs.Count(j => j.CurrentStatus == "Received"),
+                PrintingCount = jobs.Count(j => j.CurrentStatus == "Printing"),
+                InsertingCount = jobs.Count(j => j.CurrentStatus == "Inserting"),
+                MailedCount = jobs.Count(j => j.CurrentStatus == "Mailed"),
+                DeliveredCount = jobs.Count(j => j.CurrentStatus == "Delivered"),
+                ExceptionCount = jobs.Count(j => j.CurrentStatus == "Exception")
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading stats: {ex.Message}");
+        }
+    }
+}
