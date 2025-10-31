@@ -39,11 +39,11 @@ Limitacion 2: Notificaciones
 
 ### Comandos Para Correr ENTITY Framework localdb
 Abrir CMD o Powershell
-# 1) Ir a la carpeta del repo y listar los .csproj para validar rutas
+# 1) Ir a la carpeta del repo y listar los .csproj 
 cd C:\Users\oscar\Desktop\PrintingJob\PrintingJob
 dir -Recurse -Filter *.csproj
 
-# 2) Entrar a la carpeta del proyecto que contiene el .csproj (según tu salida)
+# 2) Entrar a la carpeta del proyecto que contiene el .csproj 
 cd C:\Users\oscar\Desktop\PrintingJob\PrintingJob1
 
 # 3) si no tiene dotnet-ef
